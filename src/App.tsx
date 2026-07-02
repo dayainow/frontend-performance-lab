@@ -47,7 +47,7 @@ export default function App() {
           <p className="eyebrow">Dayainow frontend performance lab</p>
           <h1>실무형 프론트엔드 상황을 직접 재현하고 측정하는 실험실</h1>
           <p className="hero-copy">
-            면접 답변에 자주 나오는 최적화 주제를 작은 실험으로 쪼갰습니다.
+            프론트엔드에서 자주 마주치는 성능 이슈를 작은 실험으로 쪼갰습니다.
             먼저 문제가 되는 상태를 만들고, 개선 버전으로 바꾼 뒤 렌더링 횟수,
             로딩 방식, 번들 경계를 확인합니다.
           </p>
