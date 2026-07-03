@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { CodeSplittingLab } from "./scenarios/code-splitting/CodeSplittingLab";
 import { ImageLoadingLab } from "./scenarios/images/ImageLoadingLab";
 import { RenderingLab } from "./scenarios/rendering/RenderingLab";
+import { SecurityOpsLab } from "./scenarios/security/SecurityOpsLab";
 import { StatePropagationLab } from "./scenarios/state/StatePropagationLab";
 
-type ScenarioKey = "rendering" | "images" | "code" | "state";
+type ScenarioKey = "rendering" | "security" | "images" | "code" | "state";
 
 const scenarios: Array<{
   key: ScenarioKey;
@@ -15,6 +16,11 @@ const scenarios: Array<{
     key: "rendering",
     title: "리렌더링",
     description: "memo, useMemo, useCallback이 실제로 줄이는 일을 관찰합니다.",
+  },
+  {
+    key: "security",
+    title: "보안 관제",
+    description: "SIEM/SOC 대시보드, 로그 검색, 위협 시각화를 재현합니다.",
   },
   {
     key: "images",
@@ -54,7 +60,7 @@ export default function App() {
         </div>
         <div className="hero-metrics" aria-label="실험 구성 요약">
           <span>
-            <strong>4</strong>
+            <strong>5</strong>
             scenarios
           </span>
           <span>
@@ -90,6 +96,7 @@ export default function App() {
         </div>
 
         {activeKey === "rendering" && <RenderingLab />}
+        {activeKey === "security" && <SecurityOpsLab />}
         {activeKey === "images" && <ImageLoadingLab />}
         {activeKey === "code" && <CodeSplittingLab />}
         {activeKey === "state" && <StatePropagationLab />}
