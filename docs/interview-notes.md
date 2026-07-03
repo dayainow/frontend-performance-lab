@@ -201,3 +201,79 @@ material.dispose();
 > 고급 시각화는 데이터의 성격에 따라 다른 방식으로 구현했습니다. 네트워크 연결 관계는 Three.js로 3D 토폴로지를 만들고, 국가별 이벤트는 SVG 기반 지리 맵으로 표시했습니다. 시간대별 이벤트와 severity 분포는 라이브러리 없이 DOM/CSS 기반 커스텀 그래프로 구현했습니다. Three.js는 WebGL 리소스를 사용하기 때문에 renderer, geometry, material, animation frame cleanup을 신경 썼고, 번들 크기를 고려해 lazy chunk로 분리했습니다. 단순 그래프는 별도 라이브러리를 쓰지 않아 불필요한 번들 증가를 피했습니다.
 
 확인할 때는 `보안 관제` 탭에서 필터를 바꿔보면 됩니다. Avg risk가 달라지면 3D 토폴로지 중심 노드 색이 바뀌고, Geo threat map의 국가별 point와 Severity graph의 막대 값도 함께 갱신됩니다. 이 흐름이 보이면 고급 시각화가 단순 장식이 아니라 필터 상태와 연결된 데이터 시각화라는 점을 설명할 수 있습니다.
+
+## 이미지 로딩 최적화 / eager, native lazy, Intersection Observer
+
+이미지 로딩 최적화 실험은 많은 이미지 카드가 있는 화면에서 이미지 요청 시점을 어떻게 제어하는지 비교하는 실험입니다. 이 레포에서는 `Eager`, `Native`, `Observer` 세 가지 모드를 제공합니다.
+
+- Eager: 이미지가 렌더링되는 즉시 `src`를 넣고 바로 로드합니다.
+- Native: 브라우저 기본 lazy loading인 `loading="lazy"`를 사용합니다.
+- Observer: `IntersectionObserver`로 화면 근처에 들어오기 전까지 `src` 자체를 넣지 않습니다.
+
+핵심 차이는 `img` 태그가 언제 만들어지고, `src`가 언제 들어가느냐입니다.
+
+```tsx
+{visible && (
+  <img
+    src={image.src}
+    loading={mode === "native" ? "lazy" : "eager"}
+    decoding="async"
+    onLoad={() => onLoad(image.id)}
+  />
+)}
+```
+
+`Eager` 모드에서는 `visible`이 처음부터 true라서 모든 이미지에 바로 `src`가 들어갑니다. 따라서 초기 렌더링 시점에 이미지 요청이 많이 발생할 수 있습니다. 상품 목록이나 갤러리처럼 이미지가 많으면 초기 네트워크 비용이 커질 수 있습니다.
+
+`Native` 모드에서는 `img` 태그와 `src`는 렌더링하지만, 브라우저에게 `loading="lazy"` 힌트를 줍니다. 실제 로딩 시점은 브라우저가 viewport, 네트워크 상태, 우선순위 등을 고려해 결정합니다. 구현은 가장 간단하지만, 정확히 언제 요청할지 세밀하게 제어하기는 어렵습니다.
+
+`Observer` 모드에서는 화면 근처에 들어오기 전까지 `img`를 렌더링하지 않고 skeleton만 보여줍니다.
+
+```tsx
+const [visible, setVisible] = useState(mode !== "observer");
+```
+
+그리고 `IntersectionObserver`가 카드가 viewport 근처에 들어온 것을 감지하면 `visible`을 true로 바꿉니다.
+
+```tsx
+const observer = new IntersectionObserver(
+  (entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      callback();
+      observer.disconnect();
+    }
+  },
+  { rootMargin: "220px" },
+);
+```
+
+`rootMargin: "220px"`은 실제로 화면에 딱 들어오기 전에 미리 로드하겠다는 의미입니다. 이렇게 하면 사용자가 스크롤할 때 이미지가 보이기 직전에 요청을 시작해서, skeleton이 오래 보이는 문제를 줄일 수 있습니다.
+
+이 실험에서는 `Loaded`와 `Skeletons` 카운트로 로딩 상태를 확인합니다.
+
+```tsx
+const [loadedIds, setLoadedIds] = useState<Set<number>>(() => new Set());
+const loadedCount = loadedIds.size;
+```
+
+이미지가 로드되면 `onLoad`에서 id를 Set에 기록합니다. Set을 쓰는 이유는 같은 이미지의 load 이벤트가 중복으로 들어와도 카운트를 한 번만 올리기 위해서입니다.
+
+```tsx
+if (current.has(id)) return current;
+const next = new Set(current);
+next.add(id);
+return next;
+```
+
+모드를 바꿀 때는 `loadedIds`를 초기화해서 각 로딩 방식의 결과를 새로 비교할 수 있게 했습니다.
+
+```tsx
+setMode(nextMode);
+setLoadedIds(new Set());
+```
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 이미지 로딩 최적화 실험에서는 많은 이미지 카드가 있는 화면을 만들고 eager, native lazy, Intersection Observer 방식을 비교했습니다. Eager는 모든 이미지에 즉시 `src`를 넣기 때문에 초기 요청이 많아질 수 있고, native lazy는 `loading="lazy"`로 브라우저에게 로딩 시점을 맡기는 방식입니다. Observer 모드는 카드가 화면 근처에 들어오기 전까지 `src`를 넣지 않고 skeleton을 보여주다가, IntersectionObserver가 감지하면 이미지를 렌더링합니다. Loaded/Skeletons 카운트와 Network 탭을 통해 스크롤 전후 요청 시점 차이를 확인할 수 있습니다.
+
+확인할 때는 `이미지 로딩` 탭에서 `Eager`, `Native`, `Observer` 모드를 바꿔보면 됩니다. Observer 모드에서는 스크롤 전에는 skeleton 수가 많고, 아래로 스크롤할수록 Loaded가 증가해야 합니다. 실제 CDN 이미지를 쓰면 DevTools Network 탭에서 초기 요청 수와 스크롤 후 요청 시점을 더 명확히 확인할 수 있습니다.
