@@ -140,3 +140,64 @@ return () => {
 > 보안 관제 / SIEM 시나리오는 SOC 운영자가 이벤트를 탐색하는 화면을 가정해 만들었습니다. 검색어, severity, source, time range, MITRE tactic을 하나의 filter state로 관리하고, 이 상태에서 KPI, 쿼리 빌더, 위협 타임라인, 지리 맵, severity graph, 로그 테이블을 모두 파생시켰습니다. 그래서 필터를 바꾸면 모든 위젯이 같은 조건으로 동기화됩니다. 또한 125만 건 규모의 로그를 가정해 가상 스크롤 테이블을 구현했고, Three.js 기반 3D 네트워크 토폴로지는 lazy chunk로 분리해 초기 로딩 비용을 줄였습니다.
 
 확인할 때는 `보안 관제` 탭에서 Log query, Severity, Source, Time, MITRE tactic을 바꿔보면 됩니다. Query builder 문장과 KPI가 바뀌고, 타임라인/맵/그래프/로그 테이블이 같은 조건으로 갱신되면 의도한 흐름이 보이는 것입니다. 3D topology가 회전하고 risk 수준에 따라 중심 노드 색이 달라지는지도 확인 포인트입니다.
+
+## 고급 시각화 / Three.js, 지리 맵, 커스텀 그래프
+
+고급 시각화 실험은 보안 관제 데이터를 단순 표로만 보여주지 않고, 상황을 빠르게 이해할 수 있도록 여러 시각화 방식을 조합한 것입니다. 이 레포에서는 Three.js 3D 네트워크 토폴로지, SVG 기반 지리 위협 맵, DOM/CSS 기반 커스텀 그래프를 함께 구성했습니다.
+
+시각화별 역할은 다릅니다.
+
+- 3D network topology: 시스템과 보안 구성 요소의 연결 관계를 보여줍니다.
+- Geo threat map: 국가별 위협 발생 위치와 위험도를 보여줍니다.
+- Threat timeline: 시간대별 critical/high 이벤트 흐름을 보여줍니다.
+- Severity graph: 심각도별 이벤트 분포를 비교합니다.
+
+3D 토폴로지는 Three.js를 사용했습니다. `Scene`, `PerspectiveCamera`, `WebGLRenderer`, `Mesh`, `Line`을 만들고, SOC를 중심 노드로 둔 뒤 EDR, firewall, IAM, cloud, DB 같은 노드를 3D 공간에 배치했습니다.
+
+```tsx
+const scene = new Scene();
+const camera = new PerspectiveCamera(42, 1, 0.1, 100);
+const renderer = new WebGLRenderer({ antialias: true });
+```
+
+각 노드는 sphere mesh로 만들고, SOC 중심 노드와 주변 노드를 line으로 연결했습니다. `riskLevel`에 따라 SOC 노드 색을 초록/주황/빨강으로 바꿔 현재 위험 수준을 직관적으로 보여줍니다.
+
+```tsx
+const riskColor = riskLevel > 72 ? "#dc2626" : riskLevel > 58 ? "#f97316" : "#0f766e";
+```
+
+애니메이션은 `requestAnimationFrame`으로 group을 회전시키고, 각 노드에 작은 pulse scale을 줍니다.
+
+```tsx
+group.rotation.y += 0.006;
+mesh.scale.setScalar(1 + pulse);
+```
+
+Three.js는 WebGL 리소스를 직접 사용하므로 cleanup이 중요합니다. 컴포넌트가 사라질 때 animation frame, resize observer, renderer, geometry, material을 정리했습니다.
+
+```tsx
+window.cancelAnimationFrame(animationFrame);
+resizeObserver.disconnect();
+renderer.dispose();
+mesh.geometry.dispose();
+material.dispose();
+```
+
+지리 위협 맵은 SVG로 구현했습니다. 실제 지도 라이브러리를 붙이지 않고, 가벼운 `viewBox`, `path`, `circle`, `text` 조합으로 국가별 threat point를 표현했습니다. 이벤트의 `risk`가 높을수록 원의 크기와 색이 더 강하게 보입니다.
+
+```tsx
+<circle r={12 + event.risk / 10} fill="rgba(220, 38, 38, 0.15)" />
+<circle r="5" fill={event.risk > 72 ? "#dc2626" : "#f59e0b"} />
+```
+
+커스텀 그래프는 라이브러리 없이 DOM과 CSS로 구성했습니다. Threat timeline은 시간대별 막대 높이를 직접 계산하고, Severity graph는 심각도별 비율을 width로 표현합니다. 이렇게 한 이유는 단순 막대 그래프나 작은 운영 위젯은 무거운 차트 라이브러리 없이도 충분히 구현할 수 있기 때문입니다.
+
+```tsx
+<i style={{ width: `${(item.value / maxValue) * 100}%`, background: item.color }} />
+```
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 고급 시각화는 데이터의 성격에 따라 다른 방식으로 구현했습니다. 네트워크 연결 관계는 Three.js로 3D 토폴로지를 만들고, 국가별 이벤트는 SVG 기반 지리 맵으로 표시했습니다. 시간대별 이벤트와 severity 분포는 라이브러리 없이 DOM/CSS 기반 커스텀 그래프로 구현했습니다. Three.js는 WebGL 리소스를 사용하기 때문에 renderer, geometry, material, animation frame cleanup을 신경 썼고, 번들 크기를 고려해 lazy chunk로 분리했습니다. 단순 그래프는 별도 라이브러리를 쓰지 않아 불필요한 번들 증가를 피했습니다.
+
+확인할 때는 `보안 관제` 탭에서 필터를 바꿔보면 됩니다. Avg risk가 달라지면 3D 토폴로지 중심 노드 색이 바뀌고, Geo threat map의 국가별 point와 Severity graph의 막대 값도 함께 갱신됩니다. 이 흐름이 보이면 고급 시각화가 단순 장식이 아니라 필터 상태와 연결된 데이터 시각화라는 점을 설명할 수 있습니다.
