@@ -75,3 +75,68 @@ style={{ transform: `translateY(${top}px)` }}
 > 대용량 테이블은 전체 데이터를 DOM에 모두 렌더링하지 않고 가상 스크롤 방식으로 구현했습니다. 전체 row 수에 맞는 spacer height를 만들어 스크롤바는 정상적으로 보이게 하고, 실제 DOM에는 `scrollTop`, `rowHeight`, `viewportHeight`로 계산한 visible range와 overscan 영역만 렌더링했습니다. 보안 로그 쪽은 125만 건 규모를 가정하되 모든 객체를 메모리에 생성하지 않고 현재 보이는 index 범위만 row 데이터로 생성했습니다. 그래서 필터 결과의 전체 개수는 유지하면서도 브라우저가 관리하는 DOM 노드는 수십 개 수준으로 제한했습니다.
 
 확인할 때는 테이블 상단의 `rendering N visible rows` 문구를 보면 됩니다. 전체 matching rows가 수천 건 또는 백만 건 이상이어도 visible rows 숫자는 제한되어 있어야 합니다. 스크롤해도 DOM row 수가 폭증하지 않고, 필터를 바꾸면 전체 row count와 visible row가 함께 갱신되는지도 확인 포인트입니다.
+
+## 보안 관제 / SIEM 대시보드
+
+보안 관제 / SIEM 실험은 SOC 운영자가 이벤트를 탐색하는 화면을 가정하고 만든 워크벤치입니다. 한 화면 안에서 로그 쿼리 빌더, 심각도/소스/시간/MITRE tactic 필터, KPI, 위협 타임라인, 지리 기반 threat map, severity graph, 3D 네트워크 토폴로지, 가상화 로그 테이블을 함께 확인할 수 있습니다.
+
+이 실험의 핵심은 모든 UI가 하나의 필터 상태에서 파생된다는 점입니다.
+
+```tsx
+const [filters, setFilters] = useState<SecurityFilters>({
+  query: "",
+  severity: "all",
+  source: "all",
+  timeRange: "24h",
+  tactic: "all",
+});
+```
+
+이 `filters` 값이 바뀌면 아래 데이터가 함께 다시 계산됩니다.
+
+```tsx
+const filteredLogCount = useMemo(() => estimateLogCount(deferredFilters), [deferredFilters]);
+const summary = useMemo(() => buildSecuritySummary(deferredFilters), [deferredFilters]);
+const timeline = useMemo(() => buildTimelineData(deferredFilters), [deferredFilters]);
+const geoEvents = useMemo(() => buildGeoEvents(deferredFilters), [deferredFilters]);
+const severityMix = useMemo(() => buildSeverityMix(deferredFilters), [deferredFilters]);
+```
+
+즉, 사용자가 Severity를 `critical`로 바꾸거나 Source를 `identity`로 바꾸면 KPI, 타임라인, 지리 맵, severity graph, 로그 테이블이 같은 조건을 기준으로 갱신됩니다. 실무 대시보드에서는 각 위젯이 서로 다른 조건을 보고 있으면 데이터 신뢰도가 떨어지기 때문에, 필터 상태를 단일 출처로 두고 파생 데이터를 만드는 구조가 중요합니다.
+
+쿼리 빌더는 현재 필터 상태를 사람이 읽을 수 있는 SIEM 검색 조건처럼 보여줍니다.
+
+```tsx
+text:admin AND severity:critical AND source:identity AND tactic:"Initial Access" AND range:24h
+```
+
+이 기능은 실제 검색 엔진을 붙인 것은 아니지만, 보안 제품 UI에서 흔히 쓰는 쿼리 작성 경험을 재현합니다. 사용자는 검색어, 심각도, 로그 소스, 시간 범위, MITRE tactic을 조합하면서 현재 탐색 조건을 명확히 볼 수 있습니다.
+
+시각화는 보안 관제에서 자주 보는 관점을 나눠서 구성했습니다.
+
+- KPI: indexed logs, filtered logs, open incidents, average risk를 요약합니다.
+- Threat timeline: 시간대별 critical/high 이벤트 추이를 막대 형태로 보여줍니다.
+- Geo threat map: 국가별 위협 지점을 지도 형태로 표시합니다.
+- Severity graph: critical/high/medium/low 분포를 커스텀 막대 그래프로 보여줍니다.
+- 3D network topology: SOC, EDR, firewall, IAM, cloud, DB 같은 노드를 Three.js로 연결해 관제 토폴로지를 표현합니다.
+- Optimized SIEM log table: 125만 건 규모의 로그를 가상 스크롤로 탐색합니다.
+
+3D 토폴로지는 `React.lazy`로 분리한 `SecurityTopology3D`에서 Three.js를 사용합니다. `riskLevel`에 따라 중심 SOC 노드 색이 바뀌고, 노드가 회전/펄스 애니메이션을 가집니다. 또한 cleanup에서 animation frame, resize observer, renderer, geometry/material을 정리해서 WebGL 리소스가 남지 않도록 했습니다.
+
+```tsx
+return () => {
+  window.cancelAnimationFrame(animationFrame);
+  resizeObserver.disconnect();
+  renderer.dispose();
+  mesh.geometry.dispose();
+  material.dispose();
+};
+```
+
+로그 테이블은 SIEM 도메인에서 특히 중요합니다. 보안 이벤트는 양이 많기 때문에 전체 로그를 모두 DOM에 올리지 않고, 필터 결과 row count와 현재 visible rows를 분리했습니다. `totalIndexedLogs = 1_250_000`으로 대규모 인덱스를 가정하고, 현재 보이는 범위만 `buildSecurityLog`로 생성합니다.
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 보안 관제 / SIEM 시나리오는 SOC 운영자가 이벤트를 탐색하는 화면을 가정해 만들었습니다. 검색어, severity, source, time range, MITRE tactic을 하나의 filter state로 관리하고, 이 상태에서 KPI, 쿼리 빌더, 위협 타임라인, 지리 맵, severity graph, 로그 테이블을 모두 파생시켰습니다. 그래서 필터를 바꾸면 모든 위젯이 같은 조건으로 동기화됩니다. 또한 125만 건 규모의 로그를 가정해 가상 스크롤 테이블을 구현했고, Three.js 기반 3D 네트워크 토폴로지는 lazy chunk로 분리해 초기 로딩 비용을 줄였습니다.
+
+확인할 때는 `보안 관제` 탭에서 Log query, Severity, Source, Time, MITRE tactic을 바꿔보면 됩니다. Query builder 문장과 KPI가 바뀌고, 타임라인/맵/그래프/로그 테이블이 같은 조건으로 갱신되면 의도한 흐름이 보이는 것입니다. 3D topology가 회전하고 risk 수준에 따라 중심 노드 색이 달라지는지도 확인 포인트입니다.
