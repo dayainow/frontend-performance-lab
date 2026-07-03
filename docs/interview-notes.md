@@ -277,3 +277,70 @@ setLoadedIds(new Set());
 > 이미지 로딩 최적화 실험에서는 많은 이미지 카드가 있는 화면을 만들고 eager, native lazy, Intersection Observer 방식을 비교했습니다. Eager는 모든 이미지에 즉시 `src`를 넣기 때문에 초기 요청이 많아질 수 있고, native lazy는 `loading="lazy"`로 브라우저에게 로딩 시점을 맡기는 방식입니다. Observer 모드는 카드가 화면 근처에 들어오기 전까지 `src`를 넣지 않고 skeleton을 보여주다가, IntersectionObserver가 감지하면 이미지를 렌더링합니다. Loaded/Skeletons 카운트와 Network 탭을 통해 스크롤 전후 요청 시점 차이를 확인할 수 있습니다.
 
 확인할 때는 `이미지 로딩` 탭에서 `Eager`, `Native`, `Observer` 모드를 바꿔보면 됩니다. Observer 모드에서는 스크롤 전에는 skeleton 수가 많고, 아래로 스크롤할수록 Loaded가 증가해야 합니다. 실제 CDN 이미지를 쓰면 DevTools Network 탭에서 초기 요청 수와 스크롤 후 요청 시점을 더 명확히 확인할 수 있습니다.
+
+## 코드 스플리팅 / React.lazy, Suspense, lazy chunk
+
+코드 스플리팅 실험은 첫 화면에 필요하지 않은 무거운 리포트 화면을 초기 번들에서 분리하고, 사용자가 버튼을 눌렀을 때만 로드하는 실험입니다. 이 레포에서는 `HeavyReport` 컴포넌트를 lazy import로 분리했습니다.
+
+```tsx
+const HeavyReport = lazy(() => import("./HeavyReport"));
+```
+
+이 코드는 `HeavyReport`를 일반 import처럼 메인 번들에 바로 포함하지 않습니다. Vite/Rollup은 동적 import를 보고 `HeavyReport` 코드를 별도 chunk로 나눕니다. 그래서 초기 화면에서는 리포트 코드가 아직 다운로드되지 않은 상태가 됩니다.
+
+화면에서는 `showReport` state로 리포트를 열고 닫습니다.
+
+```tsx
+const [showReport, setShowReport] = useState(false);
+```
+
+처음에는 `showReport`가 false라서 빈 상태를 보여줍니다.
+
+```tsx
+{!showReport && (
+  <div className="empty-state">
+    <strong>아직 리포트 코드를 받지 않았습니다.</strong>
+  </div>
+)}
+```
+
+사용자가 `무거운 리포트 로드` 버튼을 누르면 `showReport`가 true가 되고, 이때 처음으로 `HeavyReport` lazy chunk가 필요해집니다.
+
+```tsx
+{showReport && (
+  <Suspense fallback={<div className="report-skeleton">Loading report...</div>}>
+    <HeavyReport />
+  </Suspense>
+)}
+```
+
+`Suspense`는 lazy chunk를 받아오는 동안 보여줄 fallback UI를 담당합니다. 네트워크가 느리거나 chunk가 큰 경우에도 빈 화면 대신 `Loading report...` 같은 로딩 상태를 보여줄 수 있습니다.
+
+`HeavyReport` 자체는 계산 비용이 있는 리포트 화면처럼 만들었습니다.
+
+```tsx
+for (let step = 0; step < 12000; step += 1) {
+  value += Math.sin((index + 1) * step) * Math.cos(step / 8);
+}
+```
+
+실무에서는 이런 대상이 차트, 에디터, 지도, PDF 뷰어, 관리자 리포트처럼 크거나 무거운 기능일 수 있습니다. 모든 사용자에게 항상 필요하지 않은 기능이라면 처음부터 메인 번들에 넣기보다, 사용자가 실제로 열 때 로드하는 것이 초기 로딩 비용을 줄이는 데 유리합니다.
+
+빌드 결과에서는 아래처럼 별도 파일이 생기는지 확인합니다.
+
+```text
+dist/assets/HeavyReport-*.js
+```
+
+브라우저에서는 DevTools Network 탭으로 확인할 수 있습니다.
+
+1. 첫 화면 진입 시 `HeavyReport` chunk가 요청되지 않는지 봅니다.
+2. `코드 스플리팅` 탭에서 `무거운 리포트 로드` 버튼을 클릭합니다.
+3. 그 순간 `HeavyReport-*.js` chunk가 요청되는지 봅니다.
+4. chunk 로딩 중 fallback UI가 보이고, 로드 후 리포트가 나타나는지 확인합니다.
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 코드 스플리팅 실험에서는 첫 화면에 필요하지 않은 무거운 리포트 컴포넌트를 `React.lazy`와 동적 import로 분리했습니다. 초기 진입 시에는 `HeavyReport` 코드가 메인 번들에 포함되지 않고, 사용자가 `무거운 리포트 로드` 버튼을 눌러 실제로 필요해지는 순간 별도 chunk를 요청합니다. 로딩 중에는 `Suspense` fallback으로 skeleton UI를 보여주고, 로드가 끝나면 리포트를 렌더링합니다. 빌드 결과와 Network 탭에서 `HeavyReport-*.js`가 별도 chunk로 분리되고 버튼 클릭 후 요청되는 것을 확인할 수 있습니다.
+
+주의할 점은 모든 컴포넌트를 무조건 lazy로 나누는 것이 항상 좋은 것은 아니라는 점입니다. 너무 잘게 나누면 네트워크 요청이 많아지고, 사용자가 기능을 열 때 지연이 생길 수 있습니다. 그래서 이 실험처럼 첫 화면에 필요 없고 크기가 큰 기능, 또는 사용 빈도가 낮은 기능을 기준으로 분리하는 것이 좋습니다.
