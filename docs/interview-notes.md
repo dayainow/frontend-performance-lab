@@ -344,3 +344,65 @@ dist/assets/HeavyReport-*.js
 > 코드 스플리팅 실험에서는 첫 화면에 필요하지 않은 무거운 리포트 컴포넌트를 `React.lazy`와 동적 import로 분리했습니다. 초기 진입 시에는 `HeavyReport` 코드가 메인 번들에 포함되지 않고, 사용자가 `무거운 리포트 로드` 버튼을 눌러 실제로 필요해지는 순간 별도 chunk를 요청합니다. 로딩 중에는 `Suspense` fallback으로 skeleton UI를 보여주고, 로드가 끝나면 리포트를 렌더링합니다. 빌드 결과와 Network 탭에서 `HeavyReport-*.js`가 별도 chunk로 분리되고 버튼 클릭 후 요청되는 것을 확인할 수 있습니다.
 
 주의할 점은 모든 컴포넌트를 무조건 lazy로 나누는 것이 항상 좋은 것은 아니라는 점입니다. 너무 잘게 나누면 네트워크 요청이 많아지고, 사용자가 기능을 열 때 지연이 생길 수 있습니다. 그래서 이 실험처럼 첫 화면에 필요 없고 크기가 큰 기능, 또는 사용 빈도가 낮은 기능을 기준으로 분리하는 것이 좋습니다.
+
+## 상태 전파 최적화 / Single Context와 Split Context
+
+상태 전파 최적화 실험은 Context를 하나로 묶었을 때와 관심사별로 분리했을 때, 소비자 컴포넌트의 리렌더링 범위가 어떻게 달라지는지 보는 실험입니다. 이 레포에서는 `user`, `filter`, `cart` 상태를 예시로 사용합니다.
+
+Single 모드에서는 하나의 Context value 안에 세 상태가 모두 들어갑니다.
+
+```tsx
+const SingleContext = createContext<{
+  user: UserState;
+  filter: FilterState;
+  cart: CartState;
+} | null>(null);
+```
+
+그리고 `cartItems`가 바뀌면 `cart` 객체가 새로 만들어지고, 이 값을 포함하는 `singleValue`도 새 객체가 됩니다.
+
+```tsx
+const cart = useMemo(() => ({ items: cartItems }), [cartItems]);
+const singleValue = useMemo(
+  () => ({ user: userState, filter: filterState, cart }),
+  [cart],
+);
+```
+
+React Context는 provider의 `value` 참조가 바뀌면 그 Context를 구독하는 consumer들에게 변경을 전파합니다. 그래서 Single 모드에서는 실제로 바뀐 값이 `cart`뿐이어도 `SingleContext`를 읽는 `UserBadge`, `FilterSummary`, `CartSummary`가 모두 업데이트 대상이 됩니다.
+
+```tsx
+variant === "single"
+  ? useRequiredContext(SingleContext).user
+  : useRequiredContext(UserContext);
+```
+
+여기서 중요한 점은 `React.memo`만으로는 Context 변경을 막을 수 없다는 것입니다. `memo`는 부모가 넘기는 props가 같은지 비교해서 리렌더링을 줄여주지만, 컴포넌트 내부에서 `useContext`로 구독한 Context value가 바뀌면 해당 consumer는 다시 렌더링될 수 있습니다.
+
+Split 모드에서는 상태를 관심사별 Context로 나눕니다.
+
+```tsx
+const UserContext = createContext<UserState | null>(null);
+const FilterContext = createContext<FilterState | null>(null);
+const CartContext = createContext<CartState | null>(null);
+```
+
+이렇게 나누면 `cartItems` 변경은 `CartContext`의 value 변경으로 제한됩니다. `UserContext`와 `FilterContext`는 안정적인 값을 유지하므로, user나 filter만 읽는 컴포넌트까지 같은 Context 변경 때문에 반응하는 일을 줄일 수 있습니다.
+
+```tsx
+<UserContext.Provider value={userState}>
+  <FilterContext.Provider value={filterState}>
+    <CartContext.Provider value={cart}>
+      <StateConsumers variant="split" />
+    </CartContext.Provider>
+  </FilterContext.Provider>
+</UserContext.Provider>
+```
+
+화면에서는 `상태 전파` 탭에서 확인합니다. `Single` 모드로 둔 뒤 `장바구니 수량 변경` 버튼을 누르면 Cart items는 증가하지만 User, Filter, Cart 카드의 `render` 카운트가 함께 올라가는 것을 볼 수 있습니다. 같은 동작을 `Split` 모드에서 해보면 변경 관심사가 Cart로 좁혀져, User와 Filter consumer의 불필요한 반응이 줄어드는 흐름을 관찰할 수 있습니다.
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 상태 전파 최적화 실험에서는 하나의 큰 Context와 관심사별로 분리한 Context를 비교했습니다. Single Context는 `user`, `filter`, `cart`를 하나의 value 객체로 제공하기 때문에 cart 수량만 바뀌어도 provider value 참조가 바뀌고, 같은 Context를 구독하는 모든 consumer가 업데이트 대상이 됩니다. 반대로 Split Context는 `UserContext`, `FilterContext`, `CartContext`로 구독 범위를 나누기 때문에 cart 변경이 cart consumer 중심으로 전파됩니다. 이 실험에서 `React.memo`를 적용해도 Context 변경 자체는 consumer를 다시 렌더링할 수 있다는 점과, Context 설계를 잘게 나누면 변경 빈도가 높은 상태의 영향을 줄일 수 있다는 점을 확인했습니다.
+
+주의할 점은 Context를 무조건 많이 쪼개는 것이 정답은 아니라는 점입니다. 업데이트 빈도가 다르거나 소비자가 명확히 분리되는 상태는 Context를 나누는 것이 유리하지만, 너무 많은 Provider는 구조를 복잡하게 만들 수 있습니다. 더 세밀한 구독이 필요하면 context selector 패턴이나 Zustand, Jotai 같은 selector 기반 상태 관리도 선택지가 될 수 있습니다.
