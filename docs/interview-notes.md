@@ -37,3 +37,41 @@ dist/assets/SecurityTopology3D-*.js
 > 차트 라이브러리나 3D 시각화처럼 번들 크기가 큰 기능은 첫 화면에 항상 필요하지 않습니다. 그래서 `React.lazy`와 동적 import로 별도 chunk로 분리했고, `Suspense` fallback을 붙여 필요한 시점에만 로드되도록 했습니다. 빌드 결과에서 `RenderingCharts`, `SecurityTopology3D`, `HeavyReport`가 별도 asset으로 생성되는 것을 확인했습니다. 이 방식은 초기 번들 크기를 줄이는 데 유리하지만, 사용자가 기능을 처음 열 때 추가 네트워크 요청이 생기므로 fallback UI와 적절한 분리 기준이 중요합니다.
 
 확인할 때는 DevTools Network 탭을 열고 첫 화면에서 해당 chunk가 요청되지 않는지, 버튼 클릭이나 탭 진입 후 chunk가 요청되는지 보면 됩니다.
+
+## 대용량 데이터 테이블 / 가상 스크롤
+
+대용량 데이터 테이블 실험은 수천 건 고객 데이터와 125만 건 규모의 보안 로그를 한 번에 DOM에 렌더링하지 않고, 현재 화면에 보이는 행만 계산해서 렌더링하는 방식입니다. 이 패턴을 가상 스크롤 또는 windowing이라고 부릅니다.
+
+일반적인 테이블에서 10만 건, 100만 건 데이터를 모두 `map`으로 렌더링하면 브라우저 DOM 노드가 폭증합니다. 그러면 초기 렌더링, 스크롤, 레이아웃 계산, 스타일 계산 비용이 모두 커집니다. 그래서 이 레포에서는 전체 row 수는 유지하되, 실제 DOM에는 viewport 주변의 작은 window만 올립니다.
+
+핵심 계산은 아래 흐름입니다.
+
+```tsx
+const totalHeight = records.length * rowHeight;
+const startIndex = Math.floor(scrollTop / rowHeight) - overscan;
+const endIndex = Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan;
+const visibleRows = records.slice(startIndex, endIndex);
+```
+
+`totalHeight`는 스크롤바가 전체 데이터가 있는 것처럼 동작하게 만드는 값입니다. `startIndex`와 `endIndex`는 현재 스크롤 위치에서 실제로 렌더링할 행 범위입니다. `overscan`은 화면 바로 위아래 행을 조금 더 렌더링해서 빠르게 스크롤할 때 빈 화면이 보이지 않도록 하는 완충 영역입니다.
+
+렌더링할 행은 절대 위치 또는 transform으로 원래 있어야 할 위치에 배치합니다.
+
+```tsx
+style={{ transform: `translateY(${top}px)` }}
+```
+
+이렇게 하면 사용자는 전체 테이블을 스크롤하는 것처럼 느끼지만, 브라우저는 매 순간 수십 개 정도의 row만 관리합니다.
+
+이 레포에서는 두 군데에서 확인할 수 있습니다.
+
+- `RenderingLab`: 고객 분석 테이블에서 수천 건 데이터를 필터링하고 `rendering N visible rows`를 표시합니다.
+- `SecurityOpsLab`: `totalIndexedLogs = 1_250_000`으로 백만 건 이상 SIEM 로그 규모를 만들고, 필터 결과에 맞는 row 수와 실제 visible row 수를 분리해서 보여줍니다.
+
+필터가 바뀔 때는 전체 데이터를 다시 DOM에 뿌리는 것이 아니라, 조건에 맞는 row count와 현재 window를 다시 계산합니다. 보안 로그 테이블은 모든 로그 객체를 미리 125만 개 생성하지 않고, 현재 보이는 index 범위에 대해서만 deterministic하게 row 데이터를 만들어냅니다. 그래서 대용량 데이터처럼 보이면서도 메모리 사용량을 작게 유지할 수 있습니다.
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+> 대용량 테이블은 전체 데이터를 DOM에 모두 렌더링하지 않고 가상 스크롤 방식으로 구현했습니다. 전체 row 수에 맞는 spacer height를 만들어 스크롤바는 정상적으로 보이게 하고, 실제 DOM에는 `scrollTop`, `rowHeight`, `viewportHeight`로 계산한 visible range와 overscan 영역만 렌더링했습니다. 보안 로그 쪽은 125만 건 규모를 가정하되 모든 객체를 메모리에 생성하지 않고 현재 보이는 index 범위만 row 데이터로 생성했습니다. 그래서 필터 결과의 전체 개수는 유지하면서도 브라우저가 관리하는 DOM 노드는 수십 개 수준으로 제한했습니다.
+
+확인할 때는 테이블 상단의 `rendering N visible rows` 문구를 보면 됩니다. 전체 matching rows가 수천 건 또는 백만 건 이상이어도 visible rows 숫자는 제한되어 있어야 합니다. 스크롤해도 DOM row 수가 폭증하지 않고, 필터를 바꾸면 전체 row count와 visible row가 함께 갱신되는지도 확인 포인트입니다.
