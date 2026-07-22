@@ -10,7 +10,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
+    "chart.js": "^4.5.1",
+    "d3": "^7.9.0",
+    "lucide-react": "^1.25.0",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.0.0",
     "recharts": "^3.9.1",
     "three": "^0.185.1"
