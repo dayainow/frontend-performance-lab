@@ -1,6 +1,6 @@
-# ⚡ Frontend Performance & Mobile Build Lab (Dayainow Lab Series #02)
+# ⚡ Frontend Performance & Mobile Build Lab (Skill Step Labs Series #02)
 
-> **프론트엔드 번들링 최적화, 웹 데이터 시각화(Chart.js/D3), React Native WebView Bridge 및 앱스토어 배포 실습 랩**  
+> **프론트엔드 번들링 최적화, 웹 데이터 시각화(Chart.js/D3), React Native WebView Bridge 및 앱스토어 배포 파이프라인 실습 랩**  
 > 🔗 **GitHub Topics**: [`#frontend-architecture`](https://github.com/orgs/skill-step-labs/repositories?q=topic:frontend-architecture) [`#vite`](https://github.com/orgs/skill-step-labs/repositories?q=topic:vite) [`#webpack`](https://github.com/orgs/skill-step-labs/repositories?q=topic:webpack) [`#chartjs`](https://github.com/orgs/skill-step-labs/repositories?q=topic:chartjs) [`#d3js`](https://github.com/orgs/skill-step-labs/repositories?q=topic:d3js) [`#react-native-webview`](https://github.com/orgs/skill-step-labs/repositories?q=topic:react-native-webview) [`#pwa`](https://github.com/orgs/skill-step-labs/repositories?q=topic:pwa) [`#app-store`](https://github.com/orgs/skill-step-labs/repositories?q=topic:app-store)
 
 ---
@@ -42,30 +42,30 @@
 
 ---
 
-## 🎯 4. 시니어 기술 면접 대비 Q&A (Senior Deep-Dive)
+## 🎯 4. 핵심 엔지니어링 & 트레이드오프 딥다이브 (Core Engineering Deep-Dive)
 
 <details>
-<summary><strong>Q1. Vite가 개발 서버 구동 속도에서 Webpack보다 압도적으로 빠른 이유는?</strong></summary>
+<summary><strong>Q1. Vite가 개발 서버 구동 메커니즘에서 Webpack보다 빠르게 작동하는 원리는?</strong></summary>
 
-> **A1.** Webpack은 개발 시 전체 소스의 의존성 그래프를 메모리에 번들링하여 시작하지만, Vite는 esbuild(Go 기반)로 node_modules만 사전 번들링하고 개발 소스는 브라우저의 Native ES Modules(ESM) 요청에 맞춰 On-Demand로 전달하기 때문에 프로젝트 크기와 상관없이 ms 단위로 시작됩니다.
+> **분석:** Webpack은 개발 시 전체 소스의 의존성 그래프를 메모리에 번들링하여 시작하지만, Vite는 esbuild(Go 기반)로 node_modules만 사전 번들링하고 개발 소스는 브라우저의 Native ES Modules(ESM) 요청에 맞춰 On-Demand로 전달하기 때문에 프로젝트 크기와 상관없이 ms 단위로 구동됩니다.
 </details>
 
 <details>
-<summary><strong>Q2. React Native WebView와 웹 간 비동기 RPC 브릿지 통신 설계 방법은?</strong></summary>
+<summary><strong>Q2. React Native WebView와 웹 간 타입 안전성과 비동기 응답성을 확보한 RPC 브릿지 구조는?</strong></summary>
 
-> **A2.** 단방향 `postMessage` 이벤트 통신에 요청 고유 `id`를 부여하고 `Promise` Map 객체에 `resolve/reject` 함수를 유지합니다. 네이티브가 처리를 마친 커스텀 이벤트를 웹에 주입할 때 해당 `id`를 찾아 비동기로 resolve시키는 RPC 패턴을 적용하여 async/await 사용을 가능케 합니다.
+> **분석:** 단방향 `postMessage` 이벤트 통신에 요청 고유 `id`를 부여하고 `Promise` Map 객체에 `resolve/reject` 함수를 유지합니다. 네이티브가 처리를 마친 커스텀 이벤트를 웹에 주입할 때 해당 `id`를 찾아 비동기로 resolve시키는 RPC 패턴을 적용하여 async/await 관점의 비동기 흐름을 완성합니다.
 </details>
 
 <details>
-<summary><strong>Q3. iOS App Store 배포 시 Provisioning Profile과 Android AAB의 차이는?</strong></summary>
+<summary><strong>Q3. iOS Provisioning Profile 인증 체계와 Android AAB Dynamic Delivery의 최적화 이점은?</strong></summary>
 
-> **A3.** iOS Provisioning Profile은 "누가(Certificate) + 무슨 앱(App ID) + 어느 기기(UDID)"를 묶어 애플이 서명한 허가증입니다. Android AAB(App Bundle)는 단일 APK와 달리 구글 서버가 유저 기기 사양(칩셋, 언어)에 딱 맞는 맞춤형 APK(Dynamic Delivery)만 조합해 서빙하므로 용량을 40% 이상 절감합니다.
+> **분석:** iOS Provisioning Profile은 "누가(Certificate) + 무슨 앱(App ID) + 어느 기기(UDID)"를 묶어 애플이 서명한 보안 허가증입니다. Android AAB(App Bundle)는 단일 APK와 달리 구글 서버가 유저 기기 사양(칩셋, 언어)에 딱 맞는 맞춤형 APK(Dynamic Delivery)만 조합해 서빙하므로 다운로드 용량을 40% 이상 절감합니다.
 </details>
 
 <details>
-<summary><strong>Q4. OTA (CodePush) 핫픽스 배포 시 Apple 지침 준수 주의사항은?</strong></summary>
+<summary><strong>Q4. 하이브리드 앱에서 OTA (CodePush) 배포 시 앱스토어 지침 준수 범위는?</strong></summary>
 
-> **A4.** Apple Guideline 3.3.2에 따라 버그 수정, 텍스트 오타, 소규모 UI 변경은 OTA 즉시 배포가 허용되지만, 앱의 주요 목적(Primary Purpose)이 변경되거나 네이티브 API 권한을 무단 추가하는 중대 변경을 OTA로 우회하면 앱 삭제 및 개발자 계정이 정지됩니다.
+> **분석:** Apple Guideline 3.3.2에 따라 버그 수정, 텍스트 오타, 소규모 UI 변경은 OTA 즉시 배포가 허용되지만, 앱의 주요 목적(Primary Purpose)이 변경되거나 네이티브 API 권한을 무단 추가하는 중대 변경을 OTA로 우회하면 앱 삭제 및 개발자 계정이 정지됩니다.
 </details>
 
 ---
