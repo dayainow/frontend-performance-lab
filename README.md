@@ -1,7 +1,7 @@
 # ⚡ Frontend Performance & Mobile Build Lab (Dayainow Lab Series #02)
 
 > **프론트엔드 번들링 최적화, 웹 데이터 시각화(Chart.js/D3), React Native WebView Bridge 및 앱스토어 배포 실습 랩**  
-> 🔗 **GitHub Topics**: [`#frontend-architecture`](https://github.com/dayainow?tab=repositories&q=topic:frontend-architecture) [`#vite`](https://github.com/dayainow?tab=repositories&q=topic:vite) [`#webpack`](https://github.com/dayainow?tab=repositories&q=topic:webpack) [`#chartjs`](https://github.com/dayainow?tab=repositories&q=topic:chartjs) [`#d3js`](https://github.com/dayainow?tab=repositories&q=topic:d3js) [`#react-native-webview`](https://github.com/dayainow?tab=repositories&q=topic:react-native-webview) [`#pwa`](https://github.com/dayainow?tab=repositories&q=topic:pwa) [`#app-store`](https://github.com/dayainow?tab=repositories&q=topic:app-store)
+> 🔗 **GitHub Topics**: [`#frontend-architecture`](https://github.com/orgs/skill-step-labs/repositories?q=topic:frontend-architecture) [`#vite`](https://github.com/orgs/skill-step-labs/repositories?q=topic:vite) [`#webpack`](https://github.com/orgs/skill-step-labs/repositories?q=topic:webpack) [`#chartjs`](https://github.com/orgs/skill-step-labs/repositories?q=topic:chartjs) [`#d3js`](https://github.com/orgs/skill-step-labs/repositories?q=topic:d3js) [`#react-native-webview`](https://github.com/orgs/skill-step-labs/repositories?q=topic:react-native-webview) [`#pwa`](https://github.com/orgs/skill-step-labs/repositories?q=topic:pwa) [`#app-store`](https://github.com/orgs/skill-step-labs/repositories?q=topic:app-store)
 
 ---
 
@@ -85,24 +85,24 @@ npm run build
 
 ---
 
-## 🗺️ 6. Dayainow Lab Series 성격별 카테고리 로드맵
+## 🗺️ 6. Skill Step Labs 성격별 카테고리 로드맵
 
-### 🎨 1. Frontend & Mobile Web Architecture ([`#frontend-architecture`](https://github.com/dayainow?tab=repositories&q=topic:frontend-architecture))
-- [b2b-mes-admin-lab](https://github.com/dayainow/b2b-mes-admin-lab): FSD Architecture, AG-Grid/Handsontable, MFE, BFF, State Studio
-- [frontend-performance-lab](https://github.com/dayainow/frontend-performance-lab): Vite/Webpack, Canvas/SVG, RN WebView Bridge, PWA, App Store
-- [frontend-coding-interview-lab](https://github.com/dayainow/frontend-coding-interview-lab): FE 알고리즘 & 바닐라 JS/React 하드코딩
-- [frontend-security-lab](https://github.com/dayainow/frontend-security-lab): XSS/CSRF 방어, CSP, SameSite Cookie, CORS
+### 🎨 1. Frontend & Mobile Web Architecture ([`#frontend-architecture`](https://github.com/orgs/skill-step-labs/repositories?q=topic:frontend-architecture))
+- [b2b-mes-admin-lab](https://github.com/skill-step-labs/b2b-mes-admin-lab): FSD Architecture, AG-Grid/Handsontable, MFE, BFF, State Studio
+- [frontend-performance-lab](https://github.com/skill-step-labs/frontend-performance-lab): Vite/Webpack, Canvas/SVG, RN WebView Bridge, PWA, App Store
+- [frontend-coding-interview-lab](https://github.com/skill-step-labs/frontend-coding-interview-lab): FE 알고리즘 & 바닐라 JS/React 하드코딩
+- [frontend-security-lab](https://github.com/skill-step-labs/frontend-security-lab): XSS/CSRF 방어, CSP, SameSite Cookie, CORS
 
-### ⚡ 2. Fullstack & Backend Performance ([`#backend-performance`](https://github.com/dayainow?tab=repositories&q=topic:backend-performance))
-- [fullstack-reliability-lab](https://github.com/dayainow/fullstack-reliability-lab): 멱등성, 낙관적 락, 지수 백오프 & 서킷 브레이커
-- [backend-performance-lab](https://github.com/dayainow/backend-performance-lab): FastAPI, Connection Pooling, Redis Cache, N+1 Query
+### ⚡ 2. Fullstack & Backend Performance ([`#backend-performance`](https://github.com/orgs/skill-step-labs/repositories?q=topic:backend-performance))
+- [fullstack-reliability-lab](https://github.com/skill-step-labs/fullstack-reliability-lab): 멱등성, 낙관적 락, 지수 백오프 & 서킷 브레이커
+- [backend-performance-lab](https://github.com/skill-step-labs/backend-performance-lab): FastAPI, Connection Pooling, Redis Cache, N+1 Query
 
-### 🐳 3. Infrastructure & DevOps ([`#infra-devops`](https://github.com/dayainow?tab=repositories&q=topic:infra-devops))
-- [docker-infra-lab](https://github.com/dayainow/docker-infra-lab): Multi-stage Docker, Compose, Nginx Proxy, CI/CD
+### 🐳 3. Infrastructure & DevOps ([`#infra-devops`](https://github.com/orgs/skill-step-labs/repositories?q=topic:infra-devops))
+- [docker-infra-lab](https://github.com/skill-step-labs/docker-infra-lab): Multi-stage Docker, Compose, Nginx Proxy, CI/CD
 
-### 🧠 4. AI Engineering & Data Platform ([`#ai-data-platform`](https://github.com/dayainow?tab=repositories&q=topic:ai-data-platform))
-- [llm-rag-data-platform-lab](https://github.com/dayainow/llm-rag-data-platform-lab): RAG, ChromaDB/FAISS Vector Store, AWS Bedrock
-- [ai-product-patterns-lab](https://github.com/dayainow/ai-product-patterns-lab): SSE Streaming, AI Fallback Router, Rate Limiter
+### 🧠 4. AI Engineering & Data Platform ([`#ai-data-platform`](https://github.com/orgs/skill-step-labs/repositories?q=topic:ai-data-platform))
+- [llm-rag-data-platform-lab](https://github.com/skill-step-labs/llm-rag-data-platform-lab): RAG, ChromaDB/FAISS Vector Store, AWS Bedrock
+- [ai-product-patterns-lab](https://github.com/skill-step-labs/ai-product-patterns-lab): SSE Streaming, AI Fallback Router, Rate Limiter
 
-### 📱 5. Mobile Native Architecture ([`#mobile-native`](https://github.com/dayainow/android-architecture-lab))
-- [android-architecture-lab](https://github.com/dayainow/android-architecture-lab): Clean Architecture, MVI, Compose, Coroutines/StateFlow
+### 📱 5. Mobile Native Architecture ([`#mobile-native`](https://github.com/orgs/skill-step-labs/repositories?q=topic:mobile-native))
+- [android-architecture-lab](https://github.com/skill-step-labs/android-architecture-lab): Clean Architecture, MVI, Compose, Coroutines/StateFlow
