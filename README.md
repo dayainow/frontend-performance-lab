@@ -1,94 +1,101 @@
-# Frontend Performance Lab
+# ⚡ Frontend Performance & Mobile Build Lab (Dayainow Lab Series #02)
 
-프론트엔드 실무에서 자주 마주치는 성능 상황을 직접 재현하고 측정하는 React 실험 레포입니다.
+> **프론트엔드 번들링 최적화, 웹 데이터 시각화(Chart.js/D3), React Native WebView Bridge 및 앱스토어 배포 실습 랩**  
+> Vite vs Webpack 빌드 최적화, Canvas 대 SVG 시각화 렌더링, 하이브리드 모바일 웹 RPC 브릿지, PWA 오프라인 캐싱 및 iOS/Android 배포 파이프라인 실습 스튜디오 제공.
 
-## 가능한 실험 시나리오
+---
 
-| 시나리오 | 설명 | 주요 검증 포인트 |
-| --- | --- | --- |
-| **리렌더링 최적화** | `React.memo`, `useMemo`, `useCallback`, functional setState를 적용하기 전후를 비교합니다. | 부모 state 변경, 행 선택, render count, Profiler commit duration |
-| **데이터 시각화 대시보드** | Recharts 기반 차트, KPI, 실시간 데이터 feed, 검색/필터 UI를 한 화면에서 재현합니다. | AreaChart, BarChart, live update 토글, KPI/차트 동기화 |
-| **대용량 데이터 테이블** | 수천 건 고객 데이터와 백만 건 이상 보안 로그를 가상 스크롤 방식으로 렌더링합니다. | visible row 제한, 스크롤 성능, 필터 결과 반영 |
-| **보안 관제 / SIEM** | SOC 대시보드, 로그 쿼리 빌더, 위협 타임라인, 지리/3D 토폴로지 시각화를 재현합니다. | Severity/Source/Time/MITRE 필터, Query builder, SIEM 로그 탐색 |
-| **고급 시각화** | Three.js 3D 네트워크 토폴로지, 지리 위협 맵, 커스텀 그래프를 구성합니다. | 3D 렌더링, 회전 애니메이션, 국가별 threat point, severity graph |
-| **이미지 로딩 최적화** | eager loading, native `loading="lazy"`, Intersection Observer 방식의 로딩 시점을 비교합니다. | Loaded/Skeletons 카운트, 스크롤 전후 요청 시점 |
-| **코드 스플리팅** | `React.lazy`와 `Suspense`로 무거운 리포트 화면을 필요한 순간에만 불러옵니다. | lazy chunk 분리, 버튼 클릭 후 chunk 로드, fallback UI |
-| **상태 전파 최적화** | 단일 Context와 분리된 Context가 소비자 컴포넌트 리렌더링에 주는 차이를 관찰합니다. | Single/Split Context, cart 변경, consumer render count |
+## 📌 1. 프로젝트 개요 (Overview)
 
-## 테스트 가능 목록
+본 레포지거리는 **웹 애플리케이션의 번들 용량 및 초기 로딩 속도 최적화(FCP/LCP), 차트 시각화 렌더링 성능 차이, 모바일 웹 대 하이브리드 앱 통신 프로토콜, iOS/Android 앱스토어 배포 및 OTA(CodePush)**까지 웹과 모바일 영역 전반의 핵심 성능 및 빌드 아키텍처를 실습할 수 있도록 구성되었습니다.
 
-### 리렌더링
+---
 
-- `Baseline` / `Optimized` 모드를 전환합니다.
-- `부모 state만 변경` 버튼을 반복 클릭해서 `Parent updates`, `List commits`, `Last duration` 값을 비교합니다.
-- 행을 선택했을 때 Baseline에서는 여러 행의 `render` 카운트가 늘고, Optimized에서는 선택 영향이 좁아지는지 확인합니다.
-- 검색어, Plan, Health 필터를 바꿔 KPI와 차트, 가상 테이블 결과가 함께 바뀌는지 확인합니다.
-- `실시간 업데이트 중지/시작` 버튼으로 live operations feed가 멈추고 다시 움직이는지 확인합니다.
-- 대용량 테이블을 스크롤하면서 전체 row 수 대비 화면에 렌더링되는 row 수가 제한되는지 확인합니다.
+## 🛠️ 2. 기술 스택 & 핵심 아키텍처 (Tech Stack)
 
-### 보안 관제 / SIEM
+| 구 분 | 기술 스택 / 패턴 | 주요 용도 |
+| :--- | :--- | :--- |
+| **Bundler & Build** | Vite v6, Rollup, esbuild, React 19, TypeScript | On-Demand ESM 번들링, 청크 분할 및 초고속 빌드 |
+| **Visualization** | Chart.js (Canvas API), D3.js (SVG Layout Engine) | 캔버스 비트맵 렌더링 대 SVG DOM 렌더링 성능 비교 |
+| **Mobile Bridge** | `window.ReactNativeWebView.postMessage`, Custom Event | 비동기 RPC 패턴 기반 웹 ↔ 네이티브 양방향 통신 |
+| **PWA & Deploy** | Service Worker, App Store Connect, Play Console | Cache-First/Network-First 및 Fastlane, CodePush OTA |
 
-- `보안 관제` 탭에서 Indexed logs, Filtered logs, Open incidents, Avg risk KPI를 확인합니다.
-- Log query에 `asset`, `user`, `KR`, `Execution` 같은 값을 입력하고 Query builder 문장이 갱신되는지 확인합니다.
-- Severity, Source, Time, MITRE tactic 필터를 변경해 KPI, 타임라인, 지리 맵, severity 그래프, 로그 테이블이 함께 바뀌는지 확인합니다.
-- Three.js 3D network topology가 렌더링되고 회전 애니메이션이 동작하는지 확인합니다.
-- Geo threat map에서 국가별 위험 점이 표시되는지 확인합니다.
-- Optimized SIEM log table을 스크롤하면서 100만 건 이상 로그 규모에서도 visible row만 렌더링되는지 확인합니다.
+---
 
-### 이미지 로딩
+## 💡 3. 핵심 학습 모듈 (Key Learning Modules)
 
-- `Eager`, `Native`, `Observer` 모드를 전환합니다.
-- Loaded와 Skeletons 카운트가 모드 전환 및 스크롤에 따라 바뀌는지 확인합니다.
-- Observer 모드에서 화면 근처로 스크롤하기 전에는 스켈레톤이 유지되고, 진입 후 이미지가 로드되는지 확인합니다.
-- DevTools Network 탭을 열어 실제 이미지 요청 시점 차이를 관찰합니다.
+### 1) [Vite vs Webpack 빌드 최적화 (`vite.config.ts`)](file:///Users/dobedub/Documents/source/lab/frontend-performance-lab/vite.config.ts)
+- **위치**: `vite.config.ts`
+- **핵심**: esbuild 사전 번들링(Pre-bundling), Rollup `manualChunks` (`react-vendor` 분할), Tree Shaking (`sideEffects: false`).
 
-### 코드 스플리팅
+### 2) [React Native WebView RPC 양방향 브릿지 (`webViewBridge.ts`)](file:///Users/dobedub/Documents/source/lab/frontend-performance-lab/src/mobile-bridge/services/webViewBridge.ts)
+- **위치**: `src/mobile-bridge/services/webViewBridge.ts`, `model/bridgeTypes.ts`
+- **핵심**: 단방향 `postMessage`의 한계를 극복하는 `Promise` (Pending Map) 비동기 RPC 패턴, 네이티브 GPS/카메라/생체인증 시뮬레이터.
 
-- 첫 화면에서 HeavyReport UI가 보이지 않는지 확인합니다.
-- `무거운 리포트 로드` 버튼을 눌렀을 때 Suspense fallback 뒤에 리포트가 나타나는지 확인합니다.
-- 버튼을 다시 눌러 리포트가 닫히는지 확인합니다.
-- `npm run build` 결과에서 `HeavyReport` 청크가 별도로 생성되는지 확인합니다.
+### 3) [Canvas vs SVG 시각화 최적화 (Chart.js / D3)](file:///Users/dobedub/Documents/source/lab/frontend-performance-lab/src/components/ChartJsExample.tsx)
+- **위치**: `src/components/ChartJsExample.tsx`, `D3Example.tsx`
+- **핵심**: Chart.js 비트맵 메모이제이션(`useMemo`) 대 D3.js 수학적 연산기 분리 렌더링.
 
-### 상태 전파
+### 4) [iOS / Android 앱스토어 배포 & OTA 체크리스트 (`appStoreDeploymentGuide.ts`)](file:///Users/dobedub/Documents/source/lab/frontend-performance-lab/src/mobile-bridge/services/appStoreDeploymentGuide.ts)
+- **위치**: `src/mobile-bridge/services/appStoreDeploymentGuide.ts`, `components/MobileBuildStudio.tsx`
+- **핵심**: iOS Provisioning Profile, Android AAB Dynamic Delivery, Fastlane 및 Apple Guideline 3.3.2 준수 CodePush.
 
-- `Single` / `Split` 모드를 전환합니다.
-- `장바구니 수량 변경` 버튼을 반복 클릭합니다.
-- Single Context에서는 cart 변경 시 User, Filter, Cart 카드의 render count가 함께 증가하는지 확인합니다.
-- Split Context에서는 Cart 카드 중심으로 render count가 증가하고 User/Filter 영향이 줄어드는지 확인합니다.
+---
 
-## 문서
+## 🎯 4. 시니어 기술 면접 대비 Q&A (Senior Deep-Dive)
 
-- [측정 기록 템플릿](docs/measurements.md)
-- [면접 설명 포인트](docs/interview-notes.md)
+<details>
+<summary><strong>Q1. Vite가 개발 서버 구동 속도에서 Webpack보다 압도적으로 빠른 이유는?</strong></summary>
 
-면접 답변에 쓸 만한 포인트를 확인할 때마다 아래 순서로 기록합니다.
+> **A1.** Webpack은 개발 시 전체 소스의 의존성 그래프를 메모리에 번들링하여 시작하지만, Vite는 esbuild(Go 기반)로 node_modules만 사전 번들링하고 개발 소스는 브라우저의 Native ES Modules(ESM) 요청에 맞춰 On-Demand로 전달하기 때문에 프로젝트 크기와 상관없이 ms 단위로 시작됩니다.
+</details>
 
-1. `docs/interview-notes.md`에 설명 포인트를 추가합니다.
-2. 실제 측정값이 있으면 `docs/measurements.md`에 날짜, 시나리오, 관찰값, 해석을 남깁니다.
-3. `npm test`와 필요한 경우 `npm run build`로 검증합니다.
-4. 변경 내용을 커밋하고 `origin/main`에 푸쉬합니다.
+<details>
+<summary><strong>Q2. React Native WebView와 웹 간 비동기 RPC 브릿지 통신 설계 방법은?</strong></summary>
 
-## 실행
+> **A2.** 단방향 `postMessage` 이벤트 통신에 요청 고유 `id`를 부여하고 `Promise` Map 객체에 `resolve/reject` 함수를 유지합니다. 네이티브가 처리를 마친 커스텀 이벤트를 웹에 주입할 때 해당 `id`를 찾아 비동기로 resolve시키는 RPC 패턴을 적용하여 async/await 사용을 가능케 합니다.
+</details>
+
+<details>
+<summary><strong>Q3. iOS App Store 배포 시 Provisioning Profile과 Android AAB의 차이는?</strong></summary>
+
+> **A3.** iOS Provisioning Profile은 "누가(Certificate) + 무슨 앱(App ID) + 어느 기기(UDID)"를 묶어 애플이 서명한 허가증입니다. Android AAB(App Bundle)는 단일 APK와 달리 구글 서버가 유저 기기 사양(칩셋, 언어)에 딱 맞는 맞춤형 APK(Dynamic Delivery)만 조합해 서빙하므로 용량을 40% 이상 절감합니다.
+</details>
+
+<details>
+<summary><strong>Q4. OTA (CodePush) 핫픽스 배포 시 Apple 지침 준수 주의사항은?</strong></summary>
+
+> **A4.** Apple Guideline 3.3.2에 따라 버그 수정, 텍스트 오타, 소규모 UI 변경은 OTA 즉시 배포가 허용되지만, 앱의 주요 목적(Primary Purpose)이 변경되거나 네이티브 API 권한을 무단 추가하는 중대 변경을 OTA로 우회하면 앱 삭제 및 개발자 계정이 정지됩니다.
+</details>
+
+---
+
+## 🏃 5. 로컬 실행 방법 (How to Run)
 
 ```bash
+# 1. 의존성 설치
 npm install
+
+# 2. 개발 서버 실행 (포트 5173 / 3000)
 npm run dev
-```
 
-빌드와 테스트:
-
-```bash
+# 3. 프로덕션 빌드 & 청크 확인
 npm run build
-npm test
 ```
 
-## 측정 방법
+---
 
-1. Chrome DevTools Performance 또는 React DevTools Profiler를 엽니다.
-2. 각 시나리오에서 모드, 필터, 버튼, 스크롤을 바꿔가며 재현합니다.
-3. 렌더링 횟수, commit duration, 이미지 요청 시점, lazy chunk 로딩 여부, 로그 테이블 visible row 수를 기록합니다.
-4. `docs/measurements.md`에 문제 상황, 개선 방법, 측정 결과, 배운 점을 남깁니다.
+## 🗺️ 6. Dayainow Lab Series 전체 로드맵
 
-## 주의
-
-개발 모드에서 React StrictMode를 켜면 렌더링 카운트가 의도적으로 더 많이 보일 수 있습니다. 이 레포는 실험값을 읽기 쉽게 하기 위해 기본 진입점에서 StrictMode를 사용하지 않습니다.
+| No | 레포지토리 명 | 핵심 다루는 주제 | 링크 |
+| :---: | :--- | :--- | :---: |
+| **01** | `b2b-mes-admin-lab` | FSD Next.js, High-Perf Grid, MFE, BFF, State | [GitHub Repo](https://github.com/dayainow/b2b-mes-admin-lab) |
+| **02** | `frontend-performance-lab` | Vite/Webpack, Canvas/SVG, RN WebView Bridge, PWA | [GitHub Repo](https://github.com/dayainow/frontend-performance-lab) |
+| **03** | `frontend-coding-interview-lab` | 프론트엔드 코딩 테스트 & 바닐라/React 구현 패턴 | [GitHub Repo](https://github.com/dayainow/frontend-coding-interview-lab) |
+| **04** | `fullstack-reliability-lab` | 멱등성, 낙관적 락, 재시도 & 서킷 브레이커 | [GitHub Repo](https://github.com/dayainow/fullstack-reliability-lab) |
+| **05** | `backend-performance-lab` | 고성능 백엔드 아키텍처 및 대용량 처리 | [GitHub Repo](https://github.com/dayainow/backend-performance-lab) |
+| **06** | `docker-infra-lab` | 도커 컨테이너화 및 인프라 오케스트레이션 | [GitHub Repo](https://github.com/dayainow/docker-infra-lab) |
+| **07** | `llm-rag-data-platform-lab` | LLM, RAG 벡터 스토어 및 데이터 파이프라인 | [GitHub Repo](https://github.com/dayainow/llm-rag-data-platform-lab) |
+| **08** | `ai-product-patterns-lab` | AI 서빙 패턴 및 제품 연동 아키텍처 | [GitHub Repo](https://github.com/dayainow/ai-product-patterns-lab) |
+| **09** | `android-architecture-lab` | 안드로이드 아키텍처 및 모바일 개발 패턴 | [GitHub Repo](https://github.com/dayainow/android-architecture-lab) |
+| **10** | `frontend-security-lab` | 프론트엔드 보안 & 웹 보안 실습 | [GitHub Repo](https://github.com/dayainow/frontend-security-lab) |
