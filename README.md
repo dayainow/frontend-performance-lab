@@ -1,7 +1,7 @@
 # ⚡ Frontend Performance & Mobile Build Lab (Dayainow Lab Series #02)
 
 > **프론트엔드 번들링 최적화, 웹 데이터 시각화(Chart.js/D3), React Native WebView Bridge 및 앱스토어 배포 실습 랩**  
-> Vite vs Webpack 빌드 최적화, Canvas 대 SVG 시각화 렌더링, 하이브리드 모바일 웹 RPC 브릿지, PWA 오프라인 캐싱 및 iOS/Android 배포 파이프라인 실습 스튜디오 제공.
+> 🔗 **GitHub Topics**: [`#frontend-architecture`](https://github.com/dayainow?tab=repositories&q=topic:frontend-architecture) [`#vite`](https://github.com/dayainow?tab=repositories&q=topic:vite) [`#webpack`](https://github.com/dayainow?tab=repositories&q=topic:webpack) [`#chartjs`](https://github.com/dayainow?tab=repositories&q=topic:chartjs) [`#d3js`](https://github.com/dayainow?tab=repositories&q=topic:d3js) [`#react-native-webview`](https://github.com/dayainow?tab=repositories&q=topic:react-native-webview) [`#pwa`](https://github.com/dayainow?tab=repositories&q=topic:pwa) [`#app-store`](https://github.com/dayainow?tab=repositories&q=topic:app-store)
 
 ---
 
@@ -85,17 +85,24 @@ npm run build
 
 ---
 
-## 🗺️ 6. Dayainow Lab Series 전체 로드맵
+## 🗺️ 6. Dayainow Lab Series 성격별 카테고리 로드맵
 
-| No | 레포지토리 명 | 핵심 다루는 주제 | 링크 |
-| :---: | :--- | :--- | :---: |
-| **01** | `b2b-mes-admin-lab` | FSD Next.js, High-Perf Grid, MFE, BFF, State | [GitHub Repo](https://github.com/dayainow/b2b-mes-admin-lab) |
-| **02** | `frontend-performance-lab` | Vite/Webpack, Canvas/SVG, RN WebView Bridge, PWA | [GitHub Repo](https://github.com/dayainow/frontend-performance-lab) |
-| **03** | `frontend-coding-interview-lab` | 프론트엔드 코딩 테스트 & 바닐라/React 구현 패턴 | [GitHub Repo](https://github.com/dayainow/frontend-coding-interview-lab) |
-| **04** | `fullstack-reliability-lab` | 멱등성, 낙관적 락, 재시도 & 서킷 브레이커 | [GitHub Repo](https://github.com/dayainow/fullstack-reliability-lab) |
-| **05** | `backend-performance-lab` | 고성능 백엔드 아키텍처 및 대용량 처리 | [GitHub Repo](https://github.com/dayainow/backend-performance-lab) |
-| **06** | `docker-infra-lab` | 도커 컨테이너화 및 인프라 오케스트레이션 | [GitHub Repo](https://github.com/dayainow/docker-infra-lab) |
-| **07** | `llm-rag-data-platform-lab` | LLM, RAG 벡터 스토어 및 데이터 파이프라인 | [GitHub Repo](https://github.com/dayainow/llm-rag-data-platform-lab) |
-| **08** | `ai-product-patterns-lab` | AI 서빙 패턴 및 제품 연동 아키텍처 | [GitHub Repo](https://github.com/dayainow/ai-product-patterns-lab) |
-| **09** | `android-architecture-lab` | 안드로이드 아키텍처 및 모바일 개발 패턴 | [GitHub Repo](https://github.com/dayainow/android-architecture-lab) |
-| **10** | `frontend-security-lab` | 프론트엔드 보안 & 웹 보안 실습 | [GitHub Repo](https://github.com/dayainow/frontend-security-lab) |
+### 🎨 1. Frontend & Mobile Web Architecture ([`#frontend-architecture`](https://github.com/dayainow?tab=repositories&q=topic:frontend-architecture))
+- [b2b-mes-admin-lab](https://github.com/dayainow/b2b-mes-admin-lab): FSD Architecture, AG-Grid/Handsontable, MFE, BFF, State Studio
+- [frontend-performance-lab](https://github.com/dayainow/frontend-performance-lab): Vite/Webpack, Canvas/SVG, RN WebView Bridge, PWA, App Store
+- [frontend-coding-interview-lab](https://github.com/dayainow/frontend-coding-interview-lab): FE 알고리즘 & 바닐라 JS/React 하드코딩
+- [frontend-security-lab](https://github.com/dayainow/frontend-security-lab): XSS/CSRF 방어, CSP, SameSite Cookie, CORS
+
+### ⚡ 2. Fullstack & Backend Performance ([`#backend-performance`](https://github.com/dayainow?tab=repositories&q=topic:backend-performance))
+- [fullstack-reliability-lab](https://github.com/dayainow/fullstack-reliability-lab): 멱등성, 낙관적 락, 지수 백오프 & 서킷 브레이커
+- [backend-performance-lab](https://github.com/dayainow/backend-performance-lab): FastAPI, Connection Pooling, Redis Cache, N+1 Query
+
+### 🐳 3. Infrastructure & DevOps ([`#infra-devops`](https://github.com/dayainow?tab=repositories&q=topic:infra-devops))
+- [docker-infra-lab](https://github.com/dayainow/docker-infra-lab): Multi-stage Docker, Compose, Nginx Proxy, CI/CD
+
+### 🧠 4. AI Engineering & Data Platform ([`#ai-data-platform`](https://github.com/dayainow?tab=repositories&q=topic:ai-data-platform))
+- [llm-rag-data-platform-lab](https://github.com/dayainow/llm-rag-data-platform-lab): RAG, ChromaDB/FAISS Vector Store, AWS Bedrock
+- [ai-product-patterns-lab](https://github.com/dayainow/ai-product-patterns-lab): SSE Streaming, AI Fallback Router, Rate Limiter
+
+### 📱 5. Mobile Native Architecture ([`#mobile-native`](https://github.com/dayainow/android-architecture-lab))
+- [android-architecture-lab](https://github.com/dayainow/android-architecture-lab): Clean Architecture, MVI, Compose, Coroutines/StateFlow
